@@ -1,0 +1,2 @@
+serviceClass: br.com.tectoid.securitydemo.client.GreetingService
+path: 84246BA66DBA55A26BAE7AFBB21B1A72.gwt.rpc
