@@ -1,4 +1,4 @@
-### How to create a GWT application with Spring Security from the scratch
+# How to create a GWT application with Spring Security from the scratch
 
 We will start by creating a sample application from GWT. If want to add Spring Security to your own web application, you can try starting on 2nd step. However, since I don't know what's going on your web application, it may not work. I recommend you try on a new GWT sample application to understand the steps, and then follow to your own application.
 
