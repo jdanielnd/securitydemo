@@ -147,3 +147,96 @@ Now we need to tell Spring to also read our securitydemo-security.xml configurat
 	</context-param>
 	
 That's it! We just need to run our server and try to access it. We will be redirected to a login page!
+
+# How to read users from a database
+
+In the last example we could configure Spring Security to protect our application, but username were hardcoded on the XML file. What if we want to read users from a database? Let's see how to do it!
+
+## 1. First, let's create a database to store our `users` table and `user_roles` table.
+
+    $ mysqladmin -u root -p create securitydemo
+    
+Then let's create a table to store the users
+
+    CREATE TABLE `users` (
+      `USER_ID` INT(10) UNSIGNED NOT NULL,
+      `USERNAME` VARCHAR(64) NOT NULL,
+      `PASSWORD` VARCHAR(64) NOT NULL,
+      `ENABLED` tinyint(1) NOT NULL,
+      PRIMARY KEY (`USER_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+And now let's create a table to store user roles
+
+    CREATE TABLE `user_roles` (
+      `USER_ROLE_ID` INT(10) UNSIGNED NOT NULL,
+      `USER_ID` INT(10) UNSIGNED NOT NULL,
+      `AUTHORITY` VARCHAR(64) NOT NULL,
+      PRIMARY KEY (`USER_ROLE_ID`),
+      KEY `FK_user_roles` (`USER_ID`),
+      CONSTRAINT `FK_user_roles` FOREIGN KEY (`USER_ID`) REFERENCES `users` (`USER_ID`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    
+That's it, our tables are ready, so let's populate them
+
+    INSERT INTO securitydemo.users (USER_ID, USERNAME,PASSWORD, ENABLED)
+    VALUES (1, 'user', '123456', TRUE);
+     
+    INSERT INTO securitydemo.user_roles (USER_ROLE_ID, USER_ID, AUTHORITY)
+    VALUES (1, 1, 'ROLE_USER');
+    
+## 2. Now we need to tell Spring how to connect to this database. In order to do that we need to create a DataSource JDBC bean on our ApplicationContext. And so Spring can read it, we need the following libraries:
+
+  - org.springframework.jdbc-X.X.X.RELEASE.jar
+  - org.springframework.transaction-X.X.X.RELEASE.jar
+  - mysql-connector-java-X.X.X-bin.jar
+  
+The last library can be downloaded on http://dev.mysql.com/downloads/connector/j/
+
+Having added those libraries we can describe the DataSource bean on our `securitydemo-base.xml` file. Add the following snippet of code before `</beans>` tag:
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+      <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+      <property name="url" value="jdbc:mysql://localhost:3306/securitydemo" />
+      <property name="username" value="root" />
+      <property name="password" value="password" />
+    </bean>
+    
+We have set a bean with the id `dataSource` and configured it to read from our database.
+    
+## 3. Alright, now Spring can read this database, so we need to make Spring Security look up for users from this database. To do that we need to add a JdbcUserService into AuthenticationProvider. This is done by replacing `<user-service>` tag by the following snippet of code:
+
+    <authentication-manager alias="authenticationManager">
+      <authentication-provider>
+        <jdbc-user-service data-source-ref="dataSource"
+          users-by-username-query="
+            select username,password, enabled 
+            from users where username=?" 
+	             
+          authorities-by-username-query="
+            select u.username, ur.authority from users u, user_roles ur 
+            where u.user_id = ur.user_id and u.username =?  "
+        />
+      </authentication-provider>
+    </authentication-manager>
+    
+What we have done is defined that Spring Security should look for users from the `dataSource` bean, that we have defined on the last step. We also defined the queries to look for users and authorities - both by username.
+
+That's it, we can now try to log in using the username and password we created on step 1. However, the password is being stored as plain text on the database. It's a good practice to encrypt it before storing. Spring Security will have to encrypt the password you time when you try to login, and compare it with the encrypted password to check if its correct. Spring Security automatically deals with it if we set a password encoder on our AuthenticationProvider. To do that, just add the following code before the tag `<jdbc-user-service>`.
+
+    <password-encoder hash="sha-256" />
+
+And create a new user on the database with an encrypted password. To generate an encrypted password type the following on the bash:
+
+    $ echo -n password | sha256sum
+    5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8  -
+    
+where `password` is the password you want.
+
+    INSERT INTO securitydemo.users (USER_ID, USERNAME,PASSWORD, ENABLED)
+    VALUES (2, 'user2', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', TRUE);
+     
+    INSERT INTO securitydemo.user_roles (USER_ROLE_ID, USER_ID, AUTHORITY)
+    VALUES (2, 2, 'ROLE_USER');
+
+And we're done! Try to login with the username `user2` and password `password`. Spring Security will automatically encrypt the typed password and compare to the database entry.

@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans:beans xmlns="http://www.springframework.org/schema/security"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:beans="http://www.springframework.org/schema/beans"
-        xsi:schemaLocation="
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="
                 http://www.springframework.org/schema/beans 
                 http://www.springframework.org/schema/beans/spring-beans.xsd
                 http://www.springframework.org/schema/security 
                 http://www.springframework.org/schema/security/spring-security-3.1.xsd
         ">
 
-        <http auto-config="true">
-          <intercept-url pattern="/*" access="ROLE_USER"/>
-        </http>
-        
-        <authentication-manager alias="authenticationManager">
-          <authentication-provider>
-            <user-service>
-              <user authorities="ROLE_USER" name="guest" password="guest"/>
-            </user-service>
-          </authentication-provider>
-        </authentication-manager>
+	<http auto-config="true">
+		<intercept-url pattern="/*" access="ROLE_USER" />
+	</http>
+
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider>
+			<password-encoder hash="sha-256" />
+			<jdbc-user-service data-source-ref="dataSource"
+				users-by-username-query="
+			      select username,password, enabled 
+			      from users where username=?"
+
+				authorities-by-username-query="
+			      select u.username, ur.authority from users u, user_roles ur 
+			      where u.user_id = ur.user_id and u.username =?  " />
+		</authentication-provider>
+	</authentication-manager>
 </beans:beans>
