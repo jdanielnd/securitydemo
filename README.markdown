@@ -152,7 +152,9 @@ That's it! We just need to run our server and try to access it. We will be redir
 
 In the last example we could configure Spring Security to protect our application, but username were hardcoded on the XML file. What if we want to read users from a database? Let's see how to do it!
 
-## 1. First, let's create a database to store our `users` table and `user_roles` table.
+## 1. Creating the database
+
+First, let's create a database to store our `users` table and `user_roles` table.
 
     $ mysqladmin -u root -p create securitydemo
     
@@ -185,7 +187,9 @@ That's it, our tables are ready, so let's populate them
     INSERT INTO securitydemo.user_roles (USER_ROLE_ID, USER_ID, AUTHORITY)
     VALUES (1, 1, 'ROLE_USER');
     
-## 2. Now we need to tell Spring how to connect to this database. In order to do that we need to create a DataSource JDBC bean on our ApplicationContext. And so Spring can read it, we need the following libraries:
+## 2. Add database support to Spring
+
+Now we need to tell Spring how to connect to this database. In order to do that we need to create a DataSource JDBC bean on our ApplicationContext. And so Spring can read it, we need the following libraries:
 
   - org.springframework.jdbc-X.X.X.RELEASE.jar
   - org.springframework.transaction-X.X.X.RELEASE.jar
@@ -204,7 +208,9 @@ Having added those libraries we can describe the DataSource bean on our `securit
     
 We have set a bean with the id `dataSource` and configured it to read from our database.
     
-## 3. Alright, now Spring can read this database, so we need to make Spring Security look up for users from this database. To do that we need to add a JdbcUserService into AuthenticationProvider. This is done by replacing `<user-service>` tag by the following snippet of code:
+## 3. Add database support to Spring Security
+
+Alright, now Spring can read this database, so we need to make Spring Security look up for users from this database. To do that we need to add a JdbcUserService into AuthenticationProvider. This is done by replacing `<user-service>` tag by the following snippet of code:
 
     <authentication-manager alias="authenticationManager">
       <authentication-provider>
