@@ -148,6 +148,8 @@ Now we need to tell Spring to also read our securitydemo-security.xml configurat
 	
 That's it! We just need to run our server and try to access it. We will be redirected to a login page!
 
+***
+
 # How to read users from a database
 
 In the last example we could configure Spring Security to protect our application, but username were hardcoded on the XML file. What if we want to read users from a database? Let's see how to do it!
@@ -186,6 +188,8 @@ That's it, our tables are ready, so let's populate them
      
     INSERT INTO securitydemo.user_roles (USER_ROLE_ID, USER_ID, AUTHORITY)
     VALUES (1, 1, 'ROLE_USER');
+   
+***   
     
 ## 2. Add database support to Spring
 
@@ -207,6 +211,8 @@ Having added those libraries we can describe the DataSource bean on our `securit
     </bean>
     
 We have set a bean with the id `dataSource` and configured it to read from our database.
+   
+***   
     
 ## 3. Add database support to Spring Security
 
